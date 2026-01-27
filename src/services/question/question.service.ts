@@ -41,6 +41,27 @@ export interface PaginationOptions {
     offset?: number;
 }
 
+export interface CreateQuestionSetInput {
+    title: string;
+    startDate: string;
+    questions: Array<{
+        text: string;
+        order: number;
+    }>;
+}
+
+export interface QuestionSetResponse {
+    id: string;
+    title: string;
+    startDate: string;
+    createdAt: string;
+    questions: Array<{
+        id: string;
+        text: string;
+        order: number;
+    }>;
+}
+
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
@@ -191,5 +212,80 @@ export const questionService = {
             limit,
             offset,
         };
+    },
+
+    /**
+     * Admin: Create a new question set
+     * Requirements: 4.1, 4.2, 4.3
+     */
+    async createQuestionSet(input: CreateQuestionSetInput): Promise<QuestionSetResponse> {
+        // Validate exactly 7 questions with orders 0-6
+        if (input.questions.length !== 7) {
+            throw new ValidationError(
+                'Question set must contain exactly 7 questions',
+                'INVALID_QUESTION_SET',
+                { expected: 7, received: input.questions.length }
+            );
+        }
+
+        const orders = input.questions.map((q) => q.order).sort((a, b) => a - b);
+        const expectedOrders = [0, 1, 2, 3, 4, 5, 6];
+        if (JSON.stringify(orders) !== JSON.stringify(expectedOrders)) {
+            throw new ValidationError(
+                'Questions must have order values 0-6 (each appearing exactly once)',
+                'INVALID_QUESTION_SET',
+                { expected: expectedOrders, received: orders }
+            );
+        }
+
+        // Check for duplicate startDate
+        const parsedStartDate = startOfDay(new Date(input.startDate));
+        const existingSet = await questionRepository.findQuestionSetByStartDate(parsedStartDate);
+        if (existingSet) {
+            throw new ConflictError(
+                'A question set with this start date already exists',
+                'DUPLICATE_START_DATE',
+                { startDate: parsedStartDate.toISOString() }
+            );
+        }
+
+        // Create the question set
+        const questionSet = await questionRepository.createQuestionSet({
+            title: input.title,
+            startDate: parsedStartDate,
+            questions: input.questions,
+        });
+
+        return {
+            id: questionSet.id,
+            title: questionSet.title,
+            startDate: questionSet.startDate.toISOString(),
+            createdAt: questionSet.createdAt.toISOString(),
+            questions: questionSet.questions.map((q) => ({
+                id: q.id,
+                text: q.text,
+                order: q.order,
+            })),
+        };
+    },
+
+    /**
+     * Admin: Get all question sets
+     * Requirements: 4.4, 4.5
+     */
+    async getQuestionSets(): Promise<QuestionSetResponse[]> {
+        const questionSets = await questionRepository.findAllQuestionSets();
+
+        return questionSets.map((set) => ({
+            id: set.id,
+            title: set.title,
+            startDate: set.startDate.toISOString(),
+            createdAt: set.createdAt.toISOString(),
+            questions: set.questions.map((q) => ({
+                id: q.id,
+                text: q.text,
+                order: q.order,
+            })),
+        }));
     },
 };

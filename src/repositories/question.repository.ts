@@ -12,11 +12,16 @@ export interface CreateAnswerData {
     answerDate: Date;
 }
 
+export interface CreateQuestionSetData {
+    title: string;
+    startDate: Date;
+    questions: Array<{
+        text: string;
+        order: number;
+    }>;
+}
+
 export const questionRepository = {
-    /**
-     * Find the active question set (most recent startDate <= today)
-     * Requirements: 5.1 - Select QuestionSet with most recent startDate not in future
-     */
     async findActiveQuestionSet() {
         const today = new Date();
         today.setHours(23, 59, 59, 999);
@@ -36,10 +41,6 @@ export const questionRepository = {
         });
     },
 
-    /**
-     * Find question by set and order
-     * Requirements: 1.2 - Select question based on day of week mapping to order 0-6
-     */
     async findQuestionBySetAndOrder(questionSetId: string, order: number) {
         return prisma.question.findUnique({
             where: {
@@ -51,10 +52,6 @@ export const questionRepository = {
         });
     },
 
-    /**
-     * Find user's answer for a specific date
-     * Requirements: 2.1, 2.2 - Check if user already answered today
-     */
     async findAnswerByUserAndDate(userId: string, date: Date) {
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
@@ -72,10 +69,6 @@ export const questionRepository = {
         });
     },
 
-    /**
-     * Create a new answer
-     * Requirements: 2.1, 2.2 - Create QuestionAnswer record
-     */
     async createAnswer(data: CreateAnswerData) {
         return prisma.questionAnswer.create({
             data,
@@ -85,10 +78,6 @@ export const questionRepository = {
         });
     },
 
-    /**
-     * Find all answers for a user with pagination
-     * Requirements: 3.1 - Return paginated list of past answers
-     */
     async findAnswersByUser(userId: string, options: PaginationOptions) {
         return prisma.questionAnswer.findMany({
             where: { userId },
@@ -101,13 +90,53 @@ export const questionRepository = {
         });
     },
 
-    /**
-     * Count answers for a user
-     * Requirements: 3.1 - For pagination total count
-     */
     async countAnswersByUser(userId: string) {
         return prisma.questionAnswer.count({
             where: { userId },
+        });
+    },
+
+    async createQuestionSet(data: CreateQuestionSetData) {
+        return prisma.questionSet.create({
+            data: {
+                title: data.title,
+                startDate: data.startDate,
+                questions: {
+                    create: data.questions.map((q) => ({
+                        text: q.text,
+                        order: q.order,
+                    })),
+                },
+            },
+            include: {
+                questions: {
+                    orderBy: { order: 'asc' },
+                },
+            },
+        });
+    },
+
+    async findQuestionSetByStartDate(startDate: Date) {
+        const startOfDay = new Date(startDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(startDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return prisma.questionSet.findFirst({
+            where: {
+                startDate: { gte: startOfDay, lte: endOfDay },
+            },
+        });
+    },
+
+    async findAllQuestionSets() {
+        return prisma.questionSet.findMany({
+            orderBy: { startDate: 'desc' },
+            include: {
+                questions: {
+                    orderBy: { order: 'asc' },
+                },
+            },
         });
     },
 };
