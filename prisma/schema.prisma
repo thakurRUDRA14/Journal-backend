@@ -49,7 +49,7 @@ model User {
   consent        Consent?
   journalEntries JournalEntry[]
   moods          MoodEntry[]
-  answer         QuestionAnswer[]
+  answers        QuestionAnswer[]
 }
 
 model Session {
@@ -60,6 +60,8 @@ model Session {
   createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Consent {
@@ -89,7 +91,7 @@ model JournalEntry {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, entryDate]) // one journal per day
+  @@unique([userId, entryDate])
 }
 
 model MoodEntry {
@@ -103,15 +105,28 @@ model MoodEntry {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, entryDate]) // one mood per day
+  @@unique([userId, entryDate])
 }
 
-model DailyQuestion {
-  id              String           @id @default(uuid())
-  question        String
-  date            DateTime         @unique
-  createdBy       String
-  questionAnswers QuestionAnswer[]
+model QuestionSet {
+  id        String   @id @default(uuid())
+  title     String
+  startDate DateTime
+  createdAt DateTime @default(now())
+
+  questions Question[]
+}
+
+model Question {
+  id            String @id @default(uuid())
+  questionSetId String
+  text          String
+  order         Int
+
+  questionSet QuestionSet      @relation(fields: [questionSetId], references: [id])
+  answers     QuestionAnswer[]
+
+  @@unique([questionSetId, order])
 }
 
 model QuestionAnswer {
@@ -119,10 +134,14 @@ model QuestionAnswer {
   userId     String
   questionId String
   answer     String
-  createdAt  DateTime @default(now())
+  answerDate DateTime
 
-  user     User          @relation(fields: [userId], references: [id])
-  question DailyQuestion @relation(fields: [questionId], references: [id])
+  createdAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([userId, answerDate]) // one answer per day
 }
 
 model AdminAudio {
