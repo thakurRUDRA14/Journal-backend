@@ -1,38 +1,13 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 import { journalService } from '../services/journal';
 import { requireAuth } from '../middleware';
 import { asyncHandler } from '../utils/asyncHandler';
-import { ValidationError } from '../utils/errors';
+import { ValidationError, UploadError } from '../utils/errors';
+import { journalUpload } from '../utils/upload';
 
 const router = Router();
-
-// Setup multer for file uploads
-const uploadDir = path.join(process.cwd(), 'uploads', 'journal');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => {
-        const userId = (req as Request & { user?: { userId: string } }).user?.userId ?? 'unknown';
-        const ext = path.extname(file.originalname);
-        cb(null, `${userId}-${Date.now()}${ext}`);
-    },
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (_req, file, cb) => {
-        const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        cb(null, allowed.includes(file.mimetype));
-    },
-});
 
 const createJournalSchema = z.object({
     content: z.string().min(1, 'Content is required'),
@@ -43,15 +18,24 @@ router.use(requireAuth());
 // POST /api/v1/journal - Create today's entry with optional photo and audio
 router.post(
     '/',
-    upload.single('media'),
+    journalUpload.fields([
+        { name: 'photo', maxCount: 1 },
+        { name: 'audio', maxCount: 1 }
+    ]),
     asyncHandler(async (req: Request, res: Response) => {
         const parseResult = createJournalSchema.safeParse(req.body);
         if (!parseResult.success) {
             throw ValidationError.invalidInput(parseResult.error.flatten().fieldErrors);
         }
 
-        const photoUrl = req.file ? `/uploads/journal/photo/${req.file.filename}` : undefined;
-        const audioUrl = req.file ? `/uploads/journal/audio/${req.file.filename}` : undefined;
+        const files = req.files as { photo?: Express.Multer.File[], audio?: Express.Multer.File[] } | undefined;
+
+        const photoUrl = files?.photo?.[0]
+            ? `/uploads/journal/photo/${files.photo[0].filename}`
+            : undefined;
+        const audioUrl = files?.audio?.[0]
+            ? `/uploads/journal/audio/${files.audio[0].filename}`
+            : undefined;
 
         const entry = await journalService.createEntry(req.user!.userId, {
             content: parseResult.data.content,
@@ -71,5 +55,20 @@ router.get(
         res.status(200).json(entry);
     })
 );
+
+// Multer error handling middleware
+function handleMulterError(err: Error, _req: Request, _res: Response, next: NextFunction): void {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            next(UploadError.fileTooLarge(10 * 1024 * 1024)); // 10MB max
+            return;
+        }
+        next(UploadError.uploadFailed(err.message));
+        return;
+    }
+    next(err);
+}
+
+router.use(handleMulterError);
 
 export { router as journalRouter };

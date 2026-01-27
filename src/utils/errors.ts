@@ -276,3 +276,46 @@ export class RateLimitError extends AppError {
         );
     }
 }
+
+/**
+ * Upload error (400 Bad Request)
+ * Used when file uploads fail due to size limits, invalid types, or other issues
+ */
+export class UploadError extends AppError {
+    readonly statusCode = 400;
+    readonly code: string;
+
+    constructor(
+        message: string = 'Upload failed',
+        code: string = 'UPLOAD_FAILED',
+        details?: unknown
+    ) {
+        super(message, details);
+        this.code = code;
+    }
+
+    static fileTooLarge(maxSize: number): UploadError {
+        const maxSizeMB = maxSize / (1024 * 1024);
+        return new UploadError(
+            `File size exceeds limit of ${String(maxSizeMB)}MB`,
+            'UPLOAD_FILE_TOO_LARGE',
+            { maxSize, maxSizeMB }
+        );
+    }
+
+    static invalidFileType(allowedTypes: string[]): UploadError {
+        return new UploadError(
+            `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`,
+            'UPLOAD_INVALID_FILE_TYPE',
+            { allowedTypes }
+        );
+    }
+
+    static uploadFailed(reason: string): UploadError {
+        return new UploadError(
+            `File upload failed: ${reason}`,
+            'UPLOAD_FAILED',
+            { reason }
+        );
+    }
+}
