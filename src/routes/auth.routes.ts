@@ -38,7 +38,7 @@ const signupSchema = z.object({
     recordingAccepted: z.preprocess(
         (val) => val === true || val === 'true',
         z.boolean().refine((val) => val === true, {
-            message: 'Privacy policy must be accepted',
+            message: 'Recording policy must be accepted',
         })
     ),
 });

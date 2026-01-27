@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import dotenv from 'dotenv';
-import { authRouter, journalRouter } from './routes';
+import { authRouter, journalRouter, moodRouter } from './routes';
 import { AppError } from './utils/errors';
 
 dotenv.config();
@@ -28,6 +28,7 @@ app.get('/health', (_req, res) => {
 // API Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/journal', journalRouter);
+app.use('/api/v1/mood', moodRouter);
 
 // Global error handler
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
