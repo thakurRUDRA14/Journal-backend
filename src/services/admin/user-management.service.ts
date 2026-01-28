@@ -54,10 +54,11 @@ export interface DailyUserData {
 }
 
 export const userManagementService = {
-    /**
-     * Gets a user's daily data including journal entries, mood entries, and question answers
-     * organized by date in descending order (most recent first)
-     */
+
+    async getAllUsers(): Promise<UserData[]> {
+        return userRepository.findAllNonAdminUsers();
+    },
+
     async getUserDailyData(userId: string): Promise<DailyUserData[]> {
         // Check if user exists
         const user = await userRepository.findById(userId);

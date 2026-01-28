@@ -62,6 +62,15 @@ router.get(
     })
 );
 
+// GET /api/v1/admin/users - Get all users
+router.get(
+    '/users',
+    asyncHandler(async (_req: Request, res: Response) => {
+        const users = await userManagementService.getAllUsers();
+        res.status(200).json(users);
+    })
+);
+
 // GET /api/v1/admin/users/:userId/daily - Get user's daily data
 router.get(
     '/users/:userId/daily',
