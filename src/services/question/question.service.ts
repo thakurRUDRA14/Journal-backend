@@ -196,7 +196,7 @@ export const questionService = {
             questionRepository.countAnswersByUser(userId),
         ]);
 
-        const items: AnswerHistoryItem[] = answers.map((answer) => ({
+        const items: AnswerHistoryItem[] = answers.map((answer: { id: string; answer: string; answerDate: Date; question: { id: string; text: string } }) => ({
             id: answer.id,
             answer: answer.answer,
             answerDate: answer.answerDate.toISOString(),
@@ -228,7 +228,7 @@ export const questionService = {
             );
         }
 
-        const orders = input.questions.map((q) => q.order).sort((a, b) => a - b);
+        const orders = input.questions.map((q: { text: string; order: number }) => q.order).sort((a: number, b: number) => a - b);
         const expectedOrders = [0, 1, 2, 3, 4, 5, 6];
         if (JSON.stringify(orders) !== JSON.stringify(expectedOrders)) {
             throw new ValidationError(
@@ -276,12 +276,12 @@ export const questionService = {
     async getQuestionSets(): Promise<QuestionSetResponse[]> {
         const questionSets = await questionRepository.findAllQuestionSets();
 
-        return questionSets.map((set) => ({
+        return questionSets.map((set: { id: string; title: string; startDate: Date; createdAt: Date; questions: Array<{ id: string; text: string; order: number }> }) => ({
             id: set.id,
             title: set.title,
             startDate: set.startDate.toISOString(),
             createdAt: set.createdAt.toISOString(),
-            questions: set.questions.map((q) => ({
+            questions: set.questions.map((q: { id: string; text: string; order: number }) => ({
                 id: q.id,
                 text: q.text,
                 order: q.order,

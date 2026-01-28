@@ -1,15 +1,17 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../middleware';
 import { asyncHandler } from '../utils/asyncHandler';
-import { ValidationError, UploadError } from '../utils/errors';
-import { MoodType } from '../../generated/prisma/enums';
+import { ValidationError } from '../utils/errors';
 import { moodService } from '../services/mood/mood.service';
 
 const router = Router();
 
+// Define MoodType enum locally to avoid import issues
+const MoodTypeEnum = z.enum(['VERY_BAD', 'BAD', 'NEUTRAL', 'GOOD', 'VERY_GOOD']);
+
 const createMoodSchema = z.object({
-    mood: z.nativeEnum(MoodType),
+    mood: MoodTypeEnum,
     reason: z.string().optional(),
 });
 

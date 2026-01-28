@@ -55,7 +55,7 @@ export const authService = {
         trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DURATION_DAYS);
 
         // Create user and consent in a transaction
-        const user = await prisma.$transaction(async (tx) => {
+        const user = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
             const newUser = await tx.user.create({
                 data: {
                     email: email.toLowerCase(),
