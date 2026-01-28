@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import dotenv from 'dotenv';
-import { authRouter, journalRouter, moodRouter, questionRouter, adminRouter } from './routes';
+import { authRouter, journalRouter, moodRouter, questionRouter, adminRouter, audioRouter } from './routes';
 import { AppError } from './utils/errors';
 
 dotenv.config();
@@ -31,6 +31,7 @@ app.use('/api/v1/journal', journalRouter);
 app.use('/api/v1/mood', moodRouter);
 app.use('/api/v1/questions', questionRouter);
 app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/audio', audioRouter);
 
 // Global error handler
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {

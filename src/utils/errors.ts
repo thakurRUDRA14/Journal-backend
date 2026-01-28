@@ -215,6 +215,20 @@ export class ForbiddenError extends AppError {
             'AUTHZ_RESOURCE_FORBIDDEN'
         );
     }
+
+    static cannotDisableAdmin(): ForbiddenError {
+        return new ForbiddenError(
+            'Cannot disable an admin user',
+            'AUTHZ_CANNOT_DISABLE_ADMIN'
+        );
+    }
+
+    static accountDisabled(): ForbiddenError {
+        return new ForbiddenError(
+            'Your account has been disabled',
+            'AUTHZ_ACCOUNT_DISABLED'
+        );
+    }
 }
 
 /**

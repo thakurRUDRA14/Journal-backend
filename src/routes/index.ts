@@ -3,4 +3,5 @@ export { journalRouter } from './journal.routes';
 export { moodRouter } from './mood.routes';
 export { questionRouter } from './question.routes';
 export { adminRouter } from './admin.routes';
+export { audioRouter } from './audio.routes';
 

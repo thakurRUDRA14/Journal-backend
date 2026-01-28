@@ -149,4 +149,23 @@ export const userRepository = {
         });
         return user?.role === 'ADMIN';
     },
+
+    /**
+     * Finds all non-admin users
+     */
+    async findAllNonAdminUsers(): Promise<UserData[]> {
+        return prisma.user.findMany({
+            where: { role: { not: 'ADMIN' } },
+        });
+    },
+
+    /**
+     * Sets the active status of a user
+     */
+    async setActiveStatus(userId: string, isActive: boolean): Promise<UserData> {
+        return prisma.user.update({
+            where: { id: userId },
+            data: { isActive },
+        });
+    },
 };

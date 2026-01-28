@@ -1,5 +1,5 @@
-import { journalRepository } from '../../repositories';
-import { ConflictError } from '../../utils/errors';
+import { journalRepository, userRepository } from '../../repositories';
+import { ConflictError, ForbiddenError } from '../../utils/errors';
 
 export interface CreateJournalInput {
     content: string;
@@ -9,6 +9,12 @@ export interface CreateJournalInput {
 
 export const journalService = {
     async createEntry(userId: string, input: CreateJournalInput) {
+        // Check if user is disabled
+        const user = await userRepository.findById(userId);
+        if (user && !user.isActive) {
+            throw ForbiddenError.accountDisabled();
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 

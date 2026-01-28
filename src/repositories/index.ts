@@ -6,3 +6,8 @@ export {
     type PaginationOptions,
     type CreateAnswerData,
 } from './question.repository';
+export {
+    adminAudioRepository,
+    type AdminAudioData,
+    type CreateAdminAudioInput,
+} from './admin-audio.repository';

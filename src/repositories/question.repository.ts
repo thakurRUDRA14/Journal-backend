@@ -139,4 +139,27 @@ export const questionRepository = {
             },
         });
     },
+
+    /**
+     * Finds all answers for a user with the associated question text
+     */
+    async findAnswersByUserIdWithQuestionText(userId: string) {
+        const answers = await prisma.questionAnswer.findMany({
+            where: { userId },
+            orderBy: { answerDate: 'desc' },
+            include: {
+                question: {
+                    select: { text: true },
+                },
+            },
+        });
+
+        return answers.map((answer) => ({
+            id: answer.id,
+            questionId: answer.questionId,
+            questionText: answer.question.text,
+            answer: answer.answer,
+            answerDate: answer.answerDate,
+        }));
+    },
 };

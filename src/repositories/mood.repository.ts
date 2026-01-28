@@ -25,4 +25,17 @@ export const moodRepository = {
             },
         });
     },
+
+    /**
+     * Finds mood entries for a user within a date range
+     */
+    async findByUserIdAndDateRange(userId: string, startDate: Date, endDate: Date) {
+        return prisma.moodEntry.findMany({
+            where: {
+                userId,
+                entryDate: { gte: startDate, lte: endDate },
+            },
+            orderBy: { entryDate: 'desc' },
+        });
+    },
 };
